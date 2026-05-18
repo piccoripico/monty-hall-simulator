@@ -2,6 +2,8 @@
 
 A static, multilingual experiment tool for the Monty Hall problem. It runs entirely in the browser and is ready to publish with GitHub Pages.
 
+- [Simulator](https://piccoripico.github.io/monty-hall-simulator/)
+
 ## Languages
 
 - [日本語](docs/README.ja.md)
