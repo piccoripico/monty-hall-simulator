@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Monty Hall Simulator</title>
+    <link rel="stylesheet" href="./vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-copy">
+        <h1 data-i18n="app.title">Monty Hall Simulator</h1>
+        <div class="app-lead">
+          <p data-i18n="app.lead1">(1) In the Monty Hall problem, one prize is hidden behind one of several doors (three or more).</p>
+          <p data-i18n="app.lead2">(2) You first choose one door. The door stays closed.</p>
+          <p data-i18n="app.lead3">(3) Monty knows where the prize is, leaves your door and one other door closed, and opens every losing door he can. In other words, exactly one of the two remaining doors has the prize.</p>
+          <p class="lead-question" data-i18n="app.leadQuestion">At that point, should you switch doors?</p>
+        </div>
+      </div>
+
+      <label class="language-picker">
+        <span data-i18n="language.label">Language</span>
+        <select id="languageSelect" data-testid="language-select"></select>
+      </label>
+    </header>
+
+    <main class="app-shell">
+      <section class="control-panel" aria-labelledby="configTitle">
+        <div class="section-heading">
+          <h2 id="configTitle" data-i18n="config.title">Simulation settings</h2>
+        </div>
+
+        <form id="configForm" class="config-form" novalidate>
+          <label class="field">
+            <span data-i18n="config.doors">Doors</span>
+            <input id="doorInput" data-testid="door-input" type="number" min="3" max="1000" step="1" inputmode="numeric">
+          </label>
+          <label class="field">
+            <span data-i18n="config.trialsPerStrategy">Trials per strategy</span>
+            <input id="trialInput" data-testid="trial-input" type="number" min="1" max="100000" step="1" inputmode="numeric">
+          </label>
+
+          <fieldset class="mode-fieldset" data-testid="mode-fieldset">
+            <legend data-i18n="config.mode">Simulation target</legend>
+            <label class="mode-option">
+              <input type="radio" name="simulationMode" value="stay" data-testid="mode-stay">
+              <span data-i18n="config.modeStay">Stay after Monty opens losing doors</span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="simulationMode" value="switch" data-testid="mode-switch">
+              <span data-i18n="config.modeSwitch">Switch after Monty opens losing doors</span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="simulationMode" value="both" data-testid="mode-both" checked>
+              <span data-i18n="config.modeBoth">Simulate both</span>
+            </label>
+          </fieldset>
+
+          <div class="button-row">
+            <button id="runButton" data-testid="run-button" class="primary-button" type="submit" data-i18n="config.run">Run experiment</button>
+            <button id="cancelButton" data-testid="cancel-button" class="secondary-button" type="button" data-i18n="config.cancel" disabled>Cancel</button>
+          </div>
+        </form>
+
+        <p id="errorMessage" class="error-message" data-testid="error-message" aria-live="polite"></p>
+        <div class="progress-block" aria-live="polite">
+          <progress id="progressBar" data-testid="progress-bar" value="0" max="100"></progress>
+          <p id="statusText" data-testid="status" data-i18n="config.ready">Ready.</p>
+        </div>
+      </section>
+
+      <section class="results-panel" aria-labelledby="resultsTitle">
+        <div class="section-heading">
+          <h2 id="resultsTitle" data-i18n="results.title">Simulation results</h2>
+        </div>
+
+        <div id="resultsGrid" class="results-grid" data-testid="results-grid">
+          <p class="empty-state" data-i18n="results.empty">Run the experiment to see observed results.</p>
+        </div>
+        <div id="comparisonSummary" class="comparison-summary" data-testid="comparison-summary"></div>
+
+        <details id="theoryDetails" class="theory-details" data-testid="theory-details">
+          <summary id="theoryTitle" data-i18n="theory.title">Supplement</summary>
+          <div class="theory-content">
+            <p id="theoryRates" data-testid="theory-rates"></p>
+            <p id="theoryExpected" data-testid="theory-expected"></p>
+            <div id="theoryStats" class="theory-stats" data-testid="theory-stats"></div>
+            <h3 data-i18n="theory.bayesTitle">Conditional probability and Bayes' theorem</h3>
+            <div id="bayesFormula" class="formula-block" data-testid="bayes-formula"></div>
+            <p data-i18n="theory.bayesText">Bayes' theorem explains why the remaining closed door carries the larger probability.</p>
+          </div>
+        </details>
+      </section>
+
+      <section class="log-panel" aria-labelledby="logTitle">
+        <div class="section-heading log-heading">
+          <div>
+            <h2 id="logTitle" data-i18n="log.title">Trial list</h2>
+          </div>
+          <p id="logMeta" class="log-meta" data-testid="log-meta"></p>
+        </div>
+
+        <div id="trialLogScroller" class="trial-log-scroller" data-testid="trial-log-scroller" tabindex="0">
+          <table class="trial-table">
+            <thead>
+              <tr>
+                <th data-i18n="log.headers.index">#</th>
+                <th data-i18n="log.headers.strategy">Strategy</th>
+                <th data-i18n="log.headers.carDoor">Prize door</th>
+                <th data-i18n="log.headers.firstChoice">First choice</th>
+                <th data-i18n="log.headers.montyChoice">Door Monty left</th>
+                <th data-i18n="log.headers.openedDoorCount">Opened losing doors</th>
+                <th data-i18n="log.headers.finalChoice">Final choice</th>
+                <th data-i18n="log.headers.result">Result</th>
+              </tr>
+            </thead>
+            <tbody id="trialLogBody" data-testid="trial-log-body">
+              <tr>
+                <td class="empty-log" colspan="8" data-i18n="log.empty">Run the experiment to fill the trial log.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
