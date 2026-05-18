@@ -2,6 +2,8 @@
 
 [English](../README.md)
 
+- [Simulateur](https://piccoripico.github.io/monty-hall-simulator/)
+
 Un outil statique et multilingue pour expérimenter le problème de Monty Hall directement dans le navigateur. Il est prêt à être publié avec GitHub Pages.
 
 ## Qu’est-ce que le problème de Monty Hall ?

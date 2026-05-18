@@ -2,6 +2,8 @@
 
 [English](../README.md)
 
+- [模拟器](https://piccoripico.github.io/monty-hall-simulator/)
+
 一个用于在浏览器中体验蒙提霍尔问题的静态多语言实验工具，可直接发布到 GitHub Pages。
 
 ## 什么是蒙提霍尔问题？

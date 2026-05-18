@@ -2,6 +2,8 @@
 
 [English](../README.md)
 
+- [시뮬레이터](https://piccoripico.github.io/monty-hall-simulator/)
+
 브라우저에서 몬티 홀 문제를 실험할 수 있는 정적 다국어 도구입니다. GitHub Pages로 바로 배포할 수 있습니다.
 
 ## 몬티 홀 문제란?

@@ -2,6 +2,8 @@
 
 [English](../README.md)
 
+- [模擬器](https://piccoripico.github.io/monty-hall-simulator/)
+
 一個可在瀏覽器中體驗蒙提霍爾問題的靜態多語言實驗工具，可直接發布到 GitHub Pages。
 
 ## 什麼是蒙提霍爾問題？

@@ -2,6 +2,8 @@
 
 [English](../README.md)
 
+- [シミュレーター](https://piccoripico.github.io/monty-hall-simulator/)
+
 モンティ・ホール問題をブラウザ上で試せる、多言語対応の静的シミュレーターです。GitHub Pagesで公開できます。
 
 ## モンティ・ホール問題とは？
