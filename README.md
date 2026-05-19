@@ -4,7 +4,7 @@ A static, multilingual experiment tool for the Monty Hall problem. It runs entir
 
 - [Simulator](https://piccoripico.github.io/monty-hall-simulator/)
 
-## Languages
+## Multilingual Documents
 
 - [日本語](docs/README.ja.md)
 - [Français](docs/README.fr.md)
