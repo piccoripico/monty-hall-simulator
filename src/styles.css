@@ -36,7 +36,8 @@ select {
 }
 
 .app-header,
-.app-shell {
+.app-shell,
+.footer-inner {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
 }
@@ -101,6 +102,7 @@ input {
 input:focus,
 select:focus,
 button:focus-visible,
+.door-board:focus-visible,
 .trial-log-scroller:focus-visible {
   outline: 3px solid rgba(15, 118, 110, 0.24);
   outline-offset: 2px;
@@ -113,15 +115,22 @@ input[aria-invalid="true"] {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.5fr);
+  grid-template-areas:
+    "tabs tabs"
+    "mode results"
+    "board board"
+    "log log";
   gap: 18px;
   align-items: start;
 }
 
 .control-panel,
 .mode-panel,
+.door-board-panel,
 .results-panel,
 .log-panel {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
@@ -129,6 +138,7 @@ input[aria-invalid="true"] {
 }
 
 .tab-list {
+  grid-area: tabs;
   display: inline-flex;
   width: fit-content;
   gap: 6px;
@@ -136,6 +146,33 @@ input[aria-invalid="true"] {
   border-radius: 8px;
   background: #fff;
   padding: 4px;
+}
+
+.mode-panel {
+  grid-area: mode;
+}
+
+.results-panel {
+  grid-area: results;
+}
+
+.door-board-panel {
+  grid-area: board;
+}
+
+.log-panel {
+  grid-area: log;
+}
+
+.app-shell[data-active-tab="batch"] {
+  grid-template-areas:
+    "tabs tabs"
+    "mode results"
+    "log log";
+}
+
+.app-shell[data-active-tab="batch"] .door-board-panel {
+  display: none;
 }
 
 .tab-button {
@@ -181,14 +218,12 @@ input[aria-invalid="true"] {
 }
 
 .play-config {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 12px;
-  align-items: end;
 }
 
 .compact-field {
-  width: min(220px, 100%);
+  width: 100%;
 }
 
 .mode-fieldset {
@@ -312,11 +347,33 @@ progress {
   color: var(--ink);
 }
 
+.door-board-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px 18px;
+  align-items: baseline;
+}
+
+.door-board-heading .play-status {
+  margin: 0;
+}
+
+.door-board {
+  height: clamp(280px, 42vh, 520px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbfc;
+  padding: 12px;
+  margin-top: 0;
+}
+
 .door-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
   gap: 12px;
-  margin-top: 16px;
+  margin: 0;
 }
 
 .door-grid.compact {
@@ -393,8 +450,18 @@ progress {
 }
 
 .door-card.prize .door-visual {
-  border-color: #80600a;
-  background: var(--gold-soft);
+  border-color: #a96400;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.24), transparent 38%),
+    #f2c14e;
+  box-shadow:
+    0 0 0 3px rgba(255, 204, 77, 0.26),
+    inset 0 -10px 0 rgba(128, 83, 0, 0.22);
+}
+
+.door-card.prize {
+  border-color: rgba(169, 100, 0, 0.62);
+  background: #fffaf0;
 }
 
 .door-card.prize .door-visual::before {
@@ -403,9 +470,14 @@ progress {
   inset: 0;
   display: grid;
   place-items: center;
-  color: var(--gold);
-  font-size: 1.9rem;
+  color: #7a4300;
+  font-size: 2rem;
   font-weight: 950;
+  text-shadow: 0 1px 0 #fff7c2;
+}
+
+.door-grid.compact .door-card.prize .door-visual::before {
+  font-size: 1.45rem;
 }
 
 .door-card.chosen,
@@ -557,6 +629,8 @@ progress {
 }
 
 .trial-log-scroller {
+  width: 100%;
+  max-width: 100%;
   height: min(560px, 58vh);
   overflow: auto;
   border: 1px solid var(--line);
@@ -703,15 +777,61 @@ progress {
   text-align: left;
 }
 
+.app-footer {
+  width: 100%;
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  background: #e9f1f0;
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+  padding: 24px 0;
+}
+
+.footer-inner p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.footer-inner a {
+  color: var(--teal-dark);
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 900px) {
   .app-header,
-  .app-shell {
+  .app-shell,
+  .footer-inner {
     width: min(100% - 24px, 720px);
   }
 
-  .app-header,
+  .app-header {
+    grid-template-columns: 1fr;
+  }
+
   .app-shell {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "tabs"
+      "mode"
+      "results"
+      "board"
+      "log";
+  }
+
+  .app-shell[data-active-tab="batch"] {
+    grid-template-areas:
+      "tabs"
+      "mode"
+      "results"
+      "log";
   }
 }
 
@@ -725,8 +845,7 @@ progress {
   }
 
   .button-row,
-  .action-row,
-  .play-config {
+  .action-row {
     display: grid;
   }
 
@@ -740,8 +859,19 @@ progress {
     grid-template-columns: 1fr 1fr;
   }
 
+  .door-board {
+    height: min(420px, 48vh);
+  }
+
   .results-heading {
     display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .results-heading .action-row {
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    justify-content: stretch;
   }
 
   .stat-list,
@@ -751,5 +881,10 @@ progress {
 
   .log-heading {
     display: grid;
+  }
+
+  .footer-inner {
+    display: grid;
+    align-items: start;
   }
 }

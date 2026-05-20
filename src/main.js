@@ -22,6 +22,7 @@ import { LANGUAGE_NAMES, SUPPORTED_LANGUAGES, createTranslator, detectLanguage }
 import { TRIAL_ROW_HEIGHT, calculateVisibleRange } from './virtual-log.mjs';
 
 const elements = {
+  appShell: document.querySelector('.app-shell'),
   languageSelect: document.querySelector('#languageSelect'),
   tabButtons: [...document.querySelectorAll('[data-tab-target]')],
   tabPanels: [...document.querySelectorAll('[data-tab-panel]')],
@@ -137,6 +138,7 @@ function applyTranslations() {
 
 function setActiveTab(tabName) {
   activeTab = tabName === 'batch' ? 'batch' : 'play';
+  elements.appShell.dataset.activeTab = activeTab;
 
   elements.tabButtons.forEach((button) => {
     const isActive = button.dataset.tabTarget === activeTab;
@@ -420,7 +422,7 @@ function handleExport() {
   const workbook = globalThis.XLSX.utils.book_new();
   globalThis.XLSX.utils.book_append_sheet(workbook, globalThis.XLSX.utils.aoa_to_sheet(workbookData.summary), 'Summary');
   globalThis.XLSX.utils.book_append_sheet(workbook, globalThis.XLSX.utils.aoa_to_sheet(workbookData.trials), 'Trials');
-  globalThis.XLSX.writeFile(workbook, `monty-hall-simulator-v0.2.0-${createTimestamp()}.xlsx`);
+  globalThis.XLSX.writeFile(workbook, `monty-hall-simulator-v1.0.0-${createTimestamp()}.xlsx`);
 }
 
 function createExportLabels() {

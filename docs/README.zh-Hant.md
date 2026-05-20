@@ -1,10 +1,20 @@
 # 蒙提霍爾模擬器
 
-[English](../README.md)
-
-- [模擬器](https://piccoripico.github.io/monty-hall-simulator/)
-
 一個可在瀏覽器中體驗蒙提霍爾問題的靜態多語言實驗工具，可直接發布到 GitHub Pages。
+
+![蒙提霍爾模擬器截圖](assets/screenshot.png)
+
+- 線上網站：[模擬器](https://piccoripico.github.io/monty-hall-simulator/)
+
+## Multilingual Documents
+
+- [English](../README.md)
+- [日本語](README.ja.md)
+- [Français](README.fr.md)
+- [Español](README.es.md)
+- [Deutsch](README.de.md)
+- [简体中文](README.zh-Hans.md)
+- [한국어](README.ko.md)
 
 ## 什麼是蒙提霍爾問題？
 
@@ -15,6 +25,7 @@
 ## 功能
 
 - Play 模式，可點擊門手動完成一輪遊戲。
+- 門數可在 3 到 1,000 之間選擇。
 - Batch 模式，可只不換門、只換門，或同時模擬兩種策略；每個所選策略最多 100,000 次試驗。
 - 共享試驗列表，包含 Mode 欄和 All / Play / Batch 篩選。
 - 將統計結果和全部試驗列匯出為 Excel。

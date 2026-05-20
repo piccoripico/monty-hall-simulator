@@ -1,10 +1,20 @@
 # 몬티 홀 시뮬레이터
 
-[English](../README.md)
-
-- [시뮬레이터](https://piccoripico.github.io/monty-hall-simulator/)
-
 브라우저에서 몬티 홀 문제를 실험할 수 있는 정적 다국어 도구입니다. GitHub Pages로 바로 배포할 수 있습니다.
+
+![몬티 홀 시뮬레이터 스크린샷](assets/screenshot.png)
+
+- 라이브 사이트: [시뮬레이터](https://piccoripico.github.io/monty-hall-simulator/)
+
+## Multilingual Documents
+
+- [English](../README.md)
+- [日本語](README.ja.md)
+- [Français](README.fr.md)
+- [Español](README.es.md)
+- [Deutsch](README.de.md)
+- [简体中文](README.zh-Hans.md)
+- [繁體中文](README.zh-Hant.md)
 
 ## 몬티 홀 문제란?
 
@@ -15,6 +25,7 @@
 ## 기능
 
 - 문을 클릭해 직접 한 라운드를 진행하는 Play 모드.
+- 문 수는 3개부터 1,000개까지 선택할 수 있습니다.
 - 바꾸지 않기만, 바꾸기만, 또는 두 전략 모두를 전략별 최대 100,000회 실행하는 Batch 모드.
 - Mode 열과 All / Play / Batch 필터가 있는 공유 시행 목록.
 - 통계 결과와 전체 시행 행을 Excel로 내보내기.
