@@ -1,10 +1,20 @@
 # モンティ・ホールシミュレーター
 
-[English](../README.md)
-
-- [シミュレーター](https://piccoripico.github.io/monty-hall-simulator/)
-
 モンティ・ホール問題をブラウザ上で試せる、多言語対応の静的シミュレーターです。GitHub Pagesで公開できます。
+
+![モンティ・ホールシミュレーターのスクリーンショット](assets/screenshot.png)
+
+- 公開サイト: [シミュレーター](https://piccoripico.github.io/monty-hall-simulator/)
+
+## Multilingual Documents
+
+- [English](../README.md)
+- [Français](README.fr.md)
+- [Español](README.es.md)
+- [Deutsch](README.de.md)
+- [简体中文](README.zh-Hans.md)
+- [繁體中文](README.zh-Hant.md)
+- [한국어](README.ko.md)
 
 ## モンティ・ホール問題とは？
 
@@ -15,6 +25,7 @@
 ## 機能
 
 - ドアをクリックして手動で遊べるPlayモード。
+- ドアの数は3から1,000まで選択可能。
 - 「変えないのみ」「変えるのみ」「両方」を最大100,000回ずつ実行できるBatchモード。
 - Mode列とAll / Play / Batchフィルタを備えた共有の試行一覧。
 - 集計結果と試行一覧のExcel出力。

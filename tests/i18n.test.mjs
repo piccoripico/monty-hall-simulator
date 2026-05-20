@@ -46,6 +46,8 @@ describe('translations', () => {
       'app.lead2',
       'app.lead3',
       'app.leadQuestion',
+      'footer.description',
+      'footer.githubLink',
       'tabs.play',
       'tabs.batch',
       'play.title',

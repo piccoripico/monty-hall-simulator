@@ -2,7 +2,9 @@
 
 A static, multilingual experiment tool for the Monty Hall problem. It runs entirely in the browser and is ready to publish with GitHub Pages.
 
-- [Simulator](https://piccoripico.github.io/monty-hall-simulator/)
+![Monty Hall Simulator screenshot](docs/assets/screenshot.png)
+
+- Live site: [Simulator](https://piccoripico.github.io/monty-hall-simulator/)
 
 ## Multilingual Documents
 
@@ -23,6 +25,7 @@ The surprising question is whether you should stay with your first choice or swi
 ## Features
 
 - Play mode for clicking doors through a manual Monty Hall game.
+- Door count can be selected from 3 to 1,000.
 - Batch mode with stay only, switch only, or both strategies, up to 100,000 trials per selected strategy.
 - Shared trial list with a Mode column and linked All / Play / Batch filtering.
 - Excel export for summary statistics and all trial rows.

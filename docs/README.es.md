@@ -1,10 +1,20 @@
 # Simulador de Monty Hall
 
-[English](../README.md)
-
-- [Simulador](https://piccoripico.github.io/monty-hall-simulator/)
-
 Una herramienta estática y multilingüe para experimentar el problema de Monty Hall en el navegador. Está lista para publicarse con GitHub Pages.
+
+![Captura de pantalla del simulador de Monty Hall](assets/screenshot.png)
+
+- Sitio en vivo: [Simulador](https://piccoripico.github.io/monty-hall-simulator/)
+
+## Multilingual Documents
+
+- [English](../README.md)
+- [日本語](README.ja.md)
+- [Français](README.fr.md)
+- [Deutsch](README.de.md)
+- [简体中文](README.zh-Hans.md)
+- [繁體中文](README.zh-Hant.md)
+- [한국어](README.ko.md)
 
 ## ¿Qué es el problema de Monty Hall?
 
@@ -15,6 +25,7 @@ La pregunta sorprendente es si conviene mantener la primera elección o cambiar 
 ## Funciones
 
 - Modo Play para jugar manualmente haciendo clic en las puertas.
+- El número de puertas se puede seleccionar de 3 a 1.000.
 - Modo Batch con no cambiar, cambiar, o ambas estrategias, hasta 100.000 ensayos por estrategia seleccionada.
 - Lista compartida de ensayos con columna Mode y filtro All / Play / Batch.
 - Exportación a Excel de las estadísticas y de todas las filas de ensayo.

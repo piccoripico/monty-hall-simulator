@@ -1,10 +1,20 @@
 # Monty-Hall-Simulator
 
-[English](../README.md)
-
-- [Zum Simulator](https://piccoripico.github.io/monty-hall-simulator/)
-
 Ein statisches, mehrsprachiges Experimentierwerkzeug für das Monty-Hall-Problem. Es läuft vollständig im Browser und kann mit GitHub Pages veröffentlicht werden.
+
+![Screenshot des Monty-Hall-Simulators](assets/screenshot.png)
+
+- Live-Website: [Zum Simulator](https://piccoripico.github.io/monty-hall-simulator/)
+
+## Multilingual Documents
+
+- [English](../README.md)
+- [日本語](README.ja.md)
+- [Français](README.fr.md)
+- [Español](README.es.md)
+- [简体中文](README.zh-Hans.md)
+- [繁體中文](README.zh-Hant.md)
+- [한국어](README.ko.md)
 
 ## Was ist das Monty-Hall-Problem?
 
@@ -15,6 +25,7 @@ Die überraschende Frage ist, ob du bei deiner ersten Wahl bleiben oder zur ande
 ## Funktionen
 
 - Play-Modus zum manuellen Spielen per Klick auf Türen.
+- Die Anzahl der Türen ist von 3 bis 1.000 wählbar.
 - Batch-Modus mit nur bleiben, nur wechseln oder beiden Strategien, bis zu 100.000 Versuche pro ausgewählter Strategie.
 - Gemeinsame Versuchsliste mit Mode-Spalte und All / Play / Batch-Filter.
 - Excel-Export für Statistiken und alle Versuchszeilen.
