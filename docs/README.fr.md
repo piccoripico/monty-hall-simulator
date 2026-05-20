@@ -14,9 +14,10 @@ La question surprenante est de savoir s’il vaut mieux garder le premier choix 
 
 ## Fonctionnalités
 
-- Trois modes d’exécution : ne pas changer, changer, ou simuler les deux stratégies.
-- Liste complète des essais avec la porte gagnante, le premier choix, la porte laissée par Monty, le choix final et le résultat.
-- Nombre de portes configurable et jusqu’à 100 000 essais par stratégie sélectionnée.
+- Mode Play pour jouer manuellement en cliquant sur les portes.
+- Mode Batch avec ne pas changer, changer, ou les deux stratégies, jusqu’à 100 000 essais par stratégie sélectionnée.
+- Liste d’essais partagée avec colonne Mode et filtre All / Play / Batch.
+- Export Excel des statistiques et de toutes les lignes d’essai.
 - Complément théorique avec formules de probabilité conditionnelle et de Bayes rendues par KaTeX.
 - Interface en anglais, français, espagnol, allemand, japonais, chinois simplifié, chinois traditionnel et coréen.
 
