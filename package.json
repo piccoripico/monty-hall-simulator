@@ -1,6 +1,6 @@
 {
   "name": "monty-hall-simulator",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,6 +14,7 @@
     "@playwright/test": "^1.59.1"
   },
   "dependencies": {
-    "katex": "^0.16.47"
+    "katex": "^0.16.47",
+    "xlsx": "^0.18.5"
   }
 }

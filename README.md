@@ -22,9 +22,10 @@ The surprising question is whether you should stay with your first choice or swi
 
 ## Features
 
-- Three execution modes: stay only, switch only, or both strategies with the same number of trials per selected strategy.
-- Full trial log, including prize door, first choice, door left by Monty, final choice, and result.
-- Batch simulation with configurable door count and up to 100,000 trials per selected strategy.
+- Play mode for clicking doors through a manual Monty Hall game.
+- Batch mode with stay only, switch only, or both strategies, up to 100,000 trials per selected strategy.
+- Shared trial list with a Mode column and linked All / Play / Batch filtering.
+- Excel export for summary statistics and all trial rows.
 - Supplemental theory with KaTeX-rendered conditional-probability and Bayes formulas.
 - UI languages: English, French, Spanish, German, Japanese, Simplified Chinese, Traditional Chinese, and Korean.
 

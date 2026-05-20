@@ -14,9 +14,10 @@ Die überraschende Frage ist, ob du bei deiner ersten Wahl bleiben oder zur ande
 
 ## Funktionen
 
-- Drei Ausführungsmodi: nur bleiben, nur wechseln oder beide Strategien simulieren.
-- Vollständige Versuchsliste mit Preistür, erster Wahl, von Monty gelassener Tür, endgültiger Wahl und Ergebnis.
-- Konfigurierbare Türanzahl und bis zu 100.000 Versuche pro ausgewählter Strategie.
+- Play-Modus zum manuellen Spielen per Klick auf Türen.
+- Batch-Modus mit nur bleiben, nur wechseln oder beiden Strategien, bis zu 100.000 Versuche pro ausgewählter Strategie.
+- Gemeinsame Versuchsliste mit Mode-Spalte und All / Play / Batch-Filter.
+- Excel-Export für Statistiken und alle Versuchszeilen.
 - Theoretische Ergänzung mit KaTeX-gerenderten Formeln zu bedingter Wahrscheinlichkeit und Bayes.
 - Oberfläche auf Englisch, Französisch, Spanisch, Deutsch, Japanisch, vereinfachtem Chinesisch, traditionellem Chinesisch und Koreanisch.
 

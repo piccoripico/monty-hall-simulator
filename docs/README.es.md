@@ -14,9 +14,10 @@ La pregunta sorprendente es si conviene mantener la primera elección o cambiar 
 
 ## Funciones
 
-- Tres modos de ejecución: no cambiar, cambiar, o simular ambas estrategias.
-- Lista completa de ensayos con la puerta del premio, primera elección, puerta que dejó Monty, elección final y resultado.
-- Número de puertas configurable y hasta 100.000 ensayos por estrategia seleccionada.
+- Modo Play para jugar manualmente haciendo clic en las puertas.
+- Modo Batch con no cambiar, cambiar, o ambas estrategias, hasta 100.000 ensayos por estrategia seleccionada.
+- Lista compartida de ensayos con columna Mode y filtro All / Play / Batch.
+- Exportación a Excel de las estadísticas y de todas las filas de ensayo.
 - Complemento teórico con fórmulas de probabilidad condicional y Bayes renderizadas con KaTeX.
 - Interfaz en inglés, francés, español, alemán, japonés, chino simplificado, chino tradicional y coreano.
 

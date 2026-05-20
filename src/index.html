@@ -6,6 +6,7 @@
     <title>Monty Hall Simulator</title>
     <link rel="stylesheet" href="./vendor/katex/katex.min.css">
     <link rel="stylesheet" href="./styles.css">
+    <script src="./vendor/xlsx/xlsx.mini.min.js"></script>
     <script type="module" src="./main.js"></script>
   </head>
   <body>
@@ -27,15 +28,41 @@
     </header>
 
     <main class="app-shell">
-      <section class="control-panel" aria-labelledby="configTitle">
+      <div class="tab-list" role="tablist" aria-label="Modes">
+        <button id="playTab" class="tab-button" type="button" role="tab" aria-controls="playPanel" aria-selected="true" data-tab-target="play" data-testid="tab-play" data-i18n="tabs.play">Play</button>
+        <button id="batchTab" class="tab-button" type="button" role="tab" aria-controls="batchPanel" aria-selected="false" data-tab-target="batch" data-testid="tab-batch" data-i18n="tabs.batch">Batch</button>
+      </div>
+
+      <section id="playPanel" class="mode-panel play-panel" role="tabpanel" aria-labelledby="playTab" data-tab-panel="play">
         <div class="section-heading">
-          <h2 id="configTitle" data-i18n="config.title">Simulation settings</h2>
+          <h2 data-i18n="play.title">Play mode</h2>
+          <p data-i18n="play.description">Choose a door, let Monty open the losing doors, then stay or switch.</p>
         </div>
 
-        <form id="configForm" class="config-form" novalidate>
+        <form id="playForm" class="play-config" novalidate>
+          <label class="field compact-field">
+            <span data-i18n="config.doors">Doors</span>
+            <input id="playDoorInput" data-testid="play-door-input" type="number" min="3" max="1000" step="1" inputmode="numeric">
+          </label>
+          <button id="playNewButton" data-testid="play-new-button" class="primary-button" type="submit" data-i18n="play.newGame">New game</button>
+        </form>
+
+        <p id="playErrorMessage" class="error-message" data-testid="play-error-message" aria-live="polite"></p>
+        <p id="playStatusText" class="play-status" data-testid="play-status" aria-live="polite"></p>
+        <div id="doorGrid" class="door-grid" data-testid="door-grid"></div>
+        <p id="playOutcome" class="play-outcome" data-testid="play-outcome" aria-live="polite"></p>
+      </section>
+
+      <section id="batchPanel" class="mode-panel batch-panel" role="tabpanel" aria-labelledby="batchTab" data-tab-panel="batch" hidden>
+        <div class="section-heading">
+          <h2 id="configTitle" data-i18n="batch.title">Batch mode</h2>
+          <p data-i18n="batch.description">Run many generated trials and append them to the shared trial list.</p>
+        </div>
+
+        <form id="batchForm" class="config-form" novalidate>
           <label class="field">
             <span data-i18n="config.doors">Doors</span>
-            <input id="doorInput" data-testid="door-input" type="number" min="3" max="1000" step="1" inputmode="numeric">
+            <input id="batchDoorInput" data-testid="door-input" type="number" min="3" max="1000" step="1" inputmode="numeric">
           </label>
           <label class="field">
             <span data-i18n="config.trialsPerStrategy">Trials per strategy</span>
@@ -59,12 +86,12 @@
           </fieldset>
 
           <div class="button-row">
-            <button id="runButton" data-testid="run-button" class="primary-button" type="submit" data-i18n="config.run">Run experiment</button>
+            <button id="runButton" data-testid="run-button" class="primary-button" type="submit" data-i18n="config.run">Run simulation</button>
             <button id="cancelButton" data-testid="cancel-button" class="secondary-button" type="button" data-i18n="config.cancel" disabled>Cancel</button>
           </div>
         </form>
 
-        <p id="errorMessage" class="error-message" data-testid="error-message" aria-live="polite"></p>
+        <p id="batchErrorMessage" class="error-message" data-testid="error-message" aria-live="polite"></p>
         <div class="progress-block" aria-live="polite">
           <progress id="progressBar" data-testid="progress-bar" value="0" max="100"></progress>
           <p id="statusText" data-testid="status" data-i18n="config.ready">Ready.</p>
@@ -72,12 +99,32 @@
       </section>
 
       <section class="results-panel" aria-labelledby="resultsTitle">
-        <div class="section-heading">
+        <div class="section-heading results-heading">
           <h2 id="resultsTitle" data-i18n="results.title">Simulation results</h2>
+          <div class="action-row">
+            <button id="exportButton" data-testid="export-button" class="secondary-button" type="button" data-i18n="export.excel" disabled>Export Excel</button>
+            <button id="clearButton" data-testid="clear-button" class="secondary-button danger-button" type="button" data-i18n="results.clear" disabled>Clear results</button>
+          </div>
         </div>
 
+        <fieldset class="filter-fieldset" data-testid="result-filter">
+          <legend data-i18n="results.filter">Filter</legend>
+          <label class="filter-option">
+            <input type="radio" name="resultFilter" value="all" data-testid="filter-all" checked>
+            <span data-i18n="filter.all">All</span>
+          </label>
+          <label class="filter-option">
+            <input type="radio" name="resultFilter" value="play" data-testid="filter-play">
+            <span data-i18n="filter.play">Play</span>
+          </label>
+          <label class="filter-option">
+            <input type="radio" name="resultFilter" value="batch" data-testid="filter-batch">
+            <span data-i18n="filter.batch">Batch</span>
+          </label>
+        </fieldset>
+
         <div id="resultsGrid" class="results-grid" data-testid="results-grid">
-          <p class="empty-state" data-i18n="results.empty">Run the experiment to see observed results.</p>
+          <p class="empty-state" data-i18n="results.empty">Run the simulation to see results.</p>
         </div>
         <div id="comparisonSummary" class="comparison-summary" data-testid="comparison-summary"></div>
 
@@ -106,6 +153,7 @@
           <table class="trial-table">
             <thead>
               <tr>
+                <th data-i18n="log.headers.source">Mode</th>
                 <th data-i18n="log.headers.index">#</th>
                 <th data-i18n="log.headers.strategy">Strategy</th>
                 <th data-i18n="log.headers.carDoor">Prize door</th>
@@ -118,7 +166,7 @@
             </thead>
             <tbody id="trialLogBody" data-testid="trial-log-body">
               <tr>
-                <td class="empty-log" colspan="8" data-i18n="log.empty">Run the experiment to fill the trial log.</td>
+                <td class="empty-log" colspan="9" data-i18n="log.empty">Run the simulation to fill the trial list.</td>
               </tr>
             </tbody>
           </table>

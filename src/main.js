@@ -1,19 +1,49 @@
 import { render as renderMath } from './vendor/katex/katex.mjs';
-import { DEFAULT_CONFIG, SIMULATION_MODES, STRATEGIES, simulateTrials, strategiesForMode, validateConfig } from './simulation.mjs';
+import {
+  CompactTrialLog,
+  DEFAULT_CONFIG,
+  PLAY_STATES,
+  RESULT_FILTERS,
+  SIMULATION_MODES,
+  STRATEGIES,
+  TRIAL_SOURCES,
+  choosePlayFirstDoor,
+  createPlayGame,
+  finishPlayGame,
+  getOpenedDoorIndexes,
+  simulateTrials,
+  strategiesForMode,
+  summarizeLog,
+  validateConfig,
+  validatePlayConfig
+} from './simulation.mjs';
+import { createWorkbookData } from './export-data.mjs';
 import { LANGUAGE_NAMES, SUPPORTED_LANGUAGES, createTranslator, detectLanguage } from './i18n.mjs';
 import { TRIAL_ROW_HEIGHT, calculateVisibleRange } from './virtual-log.mjs';
 
 const elements = {
   languageSelect: document.querySelector('#languageSelect'),
-  configForm: document.querySelector('#configForm'),
-  doorInput: document.querySelector('#doorInput'),
+  tabButtons: [...document.querySelectorAll('[data-tab-target]')],
+  tabPanels: [...document.querySelectorAll('[data-tab-panel]')],
+  playForm: document.querySelector('#playForm'),
+  playDoorInput: document.querySelector('#playDoorInput'),
+  playNewButton: document.querySelector('#playNewButton'),
+  playErrorMessage: document.querySelector('#playErrorMessage'),
+  playStatusText: document.querySelector('#playStatusText'),
+  playOutcome: document.querySelector('#playOutcome'),
+  doorGrid: document.querySelector('#doorGrid'),
+  batchForm: document.querySelector('#batchForm'),
+  batchDoorInput: document.querySelector('#batchDoorInput'),
   trialInput: document.querySelector('#trialInput'),
   modeInputs: [...document.querySelectorAll('input[name="simulationMode"]')],
   runButton: document.querySelector('#runButton'),
   cancelButton: document.querySelector('#cancelButton'),
-  errorMessage: document.querySelector('#errorMessage'),
+  batchErrorMessage: document.querySelector('#batchErrorMessage'),
   progressBar: document.querySelector('#progressBar'),
   statusText: document.querySelector('#statusText'),
+  filterInputs: [...document.querySelectorAll('input[name="resultFilter"]')],
+  exportButton: document.querySelector('#exportButton'),
+  clearButton: document.querySelector('#clearButton'),
   resultsGrid: document.querySelector('#resultsGrid'),
   comparisonSummary: document.querySelector('#comparisonSummary'),
   logMeta: document.querySelector('#logMeta'),
@@ -25,11 +55,15 @@ const elements = {
   bayesFormula: document.querySelector('#bayesFormula')
 };
 
+const sharedLog = new CompactTrialLog(0);
+
 let currentLanguage = detectLanguage(navigator.languages);
 let t = createTranslator(currentLanguage);
 let numberFormatter = createNumberFormatter();
 let percentFormatter = createPercentFormatter();
-let lastResult = null;
+let playGame = null;
+let activeTab = 'play';
+let activeFilter = RESULT_FILTERS.all;
 let activeController = null;
 let pendingLogRender = false;
 
@@ -37,22 +71,30 @@ initialize();
 
 function initialize() {
   populateLanguageSelect();
-  elements.doorInput.value = DEFAULT_CONFIG.nDoors;
+  elements.playDoorInput.value = DEFAULT_CONFIG.nDoors;
+  elements.batchDoorInput.value = DEFAULT_CONFIG.nDoors;
   elements.trialInput.value = DEFAULT_CONFIG.trials;
   setSelectedMode(DEFAULT_CONFIG.mode);
+  setSelectedFilter(RESULT_FILTERS.all);
   elements.languageSelect.value = currentLanguage;
 
   elements.languageSelect.addEventListener('change', handleLanguageChange);
-  elements.configForm.addEventListener('submit', handleRunSubmit);
+  elements.tabButtons.forEach((button) => button.addEventListener('click', () => setActiveTab(button.dataset.tabTarget)));
+  elements.playForm.addEventListener('submit', handlePlayNewGame);
+  elements.doorGrid.addEventListener('click', handleDoorClick);
+  elements.batchForm.addEventListener('submit', handleBatchSubmit);
   elements.cancelButton.addEventListener('click', handleCancel);
-  elements.modeInputs.forEach((input) => input.addEventListener('change', renderTheoryFromConfig));
+  elements.filterInputs.forEach((input) => input.addEventListener('change', handleFilterChange));
+  elements.exportButton.addEventListener('click', handleExport);
+  elements.clearButton.addEventListener('click', handleClear);
   elements.trialLogScroller.addEventListener('scroll', scheduleTrialLogRender);
   window.addEventListener('resize', scheduleTrialLogRender);
 
   applyTranslations();
-  renderEmptyResults();
-  renderTrialLog();
-  renderTheoryFromConfig();
+  setActiveTab(activeTab);
+  startPlayGame();
+  renderSharedData();
+  setBatchStatus('config.ready');
 }
 
 function populateLanguageSelect() {
@@ -72,15 +114,8 @@ function handleLanguageChange(event) {
   numberFormatter = createNumberFormatter();
   percentFormatter = createPercentFormatter();
   applyTranslations();
-
-  if (lastResult) {
-    renderResults(lastResult.summary);
-  } else {
-    renderEmptyResults();
-  }
-
-  renderTrialLog();
-  renderTheory(lastResult?.summary);
+  renderPlayGame();
+  renderSharedData();
 }
 
 function applyTranslations() {
@@ -94,40 +129,200 @@ function applyTranslations() {
   elements.statusText.textContent = elements.statusText.dataset.statusKey
     ? t(elements.statusText.dataset.statusKey, JSON.parse(elements.statusText.dataset.statusValues ?? '{}'))
     : t('config.ready');
+
+  elements.playStatusText.textContent = elements.playStatusText.dataset.statusKey
+    ? t(elements.playStatusText.dataset.statusKey, JSON.parse(elements.playStatusText.dataset.statusValues ?? '{}'))
+    : '';
 }
 
-function handleRunSubmit(event) {
+function setActiveTab(tabName) {
+  activeTab = tabName === 'batch' ? 'batch' : 'play';
+
+  elements.tabButtons.forEach((button) => {
+    const isActive = button.dataset.tabTarget === activeTab;
+    button.setAttribute('aria-selected', String(isActive));
+    button.tabIndex = isActive ? 0 : -1;
+  });
+
+  elements.tabPanels.forEach((panel) => {
+    panel.hidden = panel.dataset.tabPanel !== activeTab;
+  });
+}
+
+function handlePlayNewGame(event) {
   event.preventDefault();
-  runSimulation();
+  startPlayGame();
+}
+
+function startPlayGame() {
+  const validation = validatePlayConfig({ nDoors: elements.playDoorInput.value });
+  renderPlayValidation(validation);
+
+  if (!validation.ok) {
+    playGame = null;
+    renderPlayGame();
+    return;
+  }
+
+  playGame = createPlayGame({ nDoors: validation.config.nDoors });
+  setPlayStatus('play.chooseFirst');
+  elements.playOutcome.textContent = '';
+  renderPlayGame();
+}
+
+function renderPlayValidation(validation) {
+  const messages = Object.values(validation.errors).map((key) => t(key));
+  elements.playErrorMessage.textContent = messages.join(' ');
+  elements.playDoorInput.setAttribute('aria-invalid', validation.errors.nDoors ? 'true' : 'false');
+}
+
+function handleDoorClick(event) {
+  const button = event.target.closest('[data-door-index]');
+
+  if (!button || !playGame) {
+    return;
+  }
+
+  const doorIndex = Number(button.dataset.doorIndex);
+
+  if (playGame.state === PLAY_STATES.choosingFirst) {
+    playGame = choosePlayFirstDoor(playGame, doorIndex);
+    setPlayStatus('play.chooseFinal');
+    elements.playOutcome.textContent = '';
+    renderPlayGame();
+    return;
+  }
+
+  if (playGame.state === PLAY_STATES.choosingFinal) {
+    const { game, trial } = finishPlayGame(playGame, doorIndex);
+    playGame = game;
+    sharedLog.append(trial);
+    setPlayStatus(trial.win ? 'play.finishedWin' : 'play.finishedLoss');
+    elements.playOutcome.textContent = trial.win ? t('play.winMessage') : t('play.lossMessage');
+    renderPlayGame();
+    renderSharedData();
+  }
+}
+
+function renderPlayGame() {
+  elements.doorGrid.replaceChildren();
+
+  if (!playGame) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = t('play.empty');
+    elements.doorGrid.append(empty);
+    return;
+  }
+
+  elements.doorGrid.classList.toggle('compact', playGame.nDoors >= 13);
+
+  const openedDoors = new Set(getOpenedDoorIndexes(playGame));
+
+  for (let index = 0; index < playGame.nDoors; index += 1) {
+    elements.doorGrid.append(renderDoorButton(index, openedDoors));
+  }
+}
+
+function renderDoorButton(index, openedDoors) {
+  const button = document.createElement('button');
+  const doorState = getDoorState(index, openedDoors);
+
+  button.type = 'button';
+  button.className = `door-card ${doorState.className}`;
+  button.dataset.doorIndex = String(index);
+  button.disabled = !isDoorSelectable(index);
+  button.setAttribute('aria-label', `${formatDoor(index)} ${doorState.label}`);
+
+  const visual = document.createElement('span');
+  visual.className = 'door-visual';
+
+  const number = document.createElement('span');
+  number.className = 'door-number';
+  number.textContent = formatDoor(index);
+
+  const label = document.createElement('span');
+  label.className = 'door-state';
+  label.textContent = doorState.label;
+
+  button.append(visual, number, label);
+  return button;
+}
+
+function getDoorState(index, openedDoors) {
+  if (playGame.state === PLAY_STATES.finished) {
+    if (index === playGame.carDoor) {
+      return { className: 'prize', label: t('play.doorPrize') };
+    }
+
+    if (index === playGame.finalChoice) {
+      return { className: 'chosen losing', label: t('play.doorLosing') };
+    }
+
+    return { className: 'losing', label: t('play.doorLosing') };
+  }
+
+  if (openedDoors.has(index)) {
+    return { className: 'open-losing', label: t('play.doorOpenedLosing') };
+  }
+
+  if (index === playGame.firstChoice) {
+    return { className: 'chosen', label: t('play.doorFirstChoice') };
+  }
+
+  if (index === playGame.montyChoice) {
+    return { className: 'left', label: t('play.doorMontyLeft') };
+  }
+
+  return { className: 'closed', label: t('play.doorClosed') };
+}
+
+function isDoorSelectable(index) {
+  if (playGame.state === PLAY_STATES.choosingFirst) {
+    return true;
+  }
+
+  if (playGame.state === PLAY_STATES.choosingFinal) {
+    return index === playGame.firstChoice || index === playGame.montyChoice;
+  }
+
+  return false;
+}
+
+function setPlayStatus(key, values = {}) {
+  elements.playStatusText.dataset.statusKey = key;
+  elements.playStatusText.dataset.statusValues = JSON.stringify(values);
+  elements.playStatusText.textContent = t(key, values);
+}
+
+function handleBatchSubmit(event) {
+  event.preventDefault();
+  runBatchSimulation();
 }
 
 function handleCancel() {
   activeController?.abort();
 }
 
-async function runSimulation() {
+async function runBatchSimulation() {
   const validation = validateConfig({
-    nDoors: elements.doorInput.value,
+    nDoors: elements.batchDoorInput.value,
     trials: elements.trialInput.value,
     mode: getSelectedMode()
   });
 
-  renderValidation(validation);
+  renderBatchValidation(validation);
 
   if (!validation.ok) {
-    setStatus('config.invalid');
+    setBatchStatus('config.invalid');
     return;
   }
 
   const totalRows = validation.config.trials * strategiesForMode(validation.config.mode).length;
   activeController = new AbortController();
-  lastResult = null;
-  renderEmptyResults();
-  renderTrialLog();
-  renderTheoryFromConfig();
   setRunning(true);
   setProgress(0);
-  setStatus('config.running', {
+  setBatchStatus('config.running', {
     completed: numberFormatter.format(0),
     total: numberFormatter.format(totalRows)
   });
@@ -140,46 +335,41 @@ async function runSimulation() {
       yieldToEventLoop: true,
       onProgress: ({ completed, totalTrials, ratio }) => {
         setProgress(ratio * 100);
-        setStatus('config.running', {
+        setBatchStatus('config.running', {
           completed: numberFormatter.format(completed),
           total: numberFormatter.format(totalTrials)
         });
       }
     });
 
+    sharedLog.appendLog(result.log);
+
     if (result.canceled) {
-      lastResult = result;
-      setStatus('config.canceled', { completed: numberFormatter.format(result.completed) });
-      renderResults(result.summary);
-      renderTrialLog();
-      renderTheory(result.summary);
-      return;
+      setBatchStatus('config.canceled', { completed: numberFormatter.format(result.completed) });
+    } else {
+      setProgress(100);
+      setBatchStatus('config.completed', { total: numberFormatter.format(result.totalTrials) });
     }
 
-    lastResult = result;
-    setProgress(100);
-    setStatus('config.completed', { total: numberFormatter.format(result.totalTrials) });
-    renderResults(result.summary);
     elements.trialLogScroller.scrollTop = 0;
-    renderTrialLog();
-    renderTheory(result.summary);
+    renderSharedData();
   } finally {
     setRunning(false);
     activeController = null;
   }
 }
 
-function renderValidation(validation) {
+function renderBatchValidation(validation) {
   const messages = Object.values(validation.errors).map((key) => t(key));
-  elements.errorMessage.textContent = messages.join(' ');
-  elements.doorInput.setAttribute('aria-invalid', validation.errors.nDoors ? 'true' : 'false');
+  elements.batchErrorMessage.textContent = messages.join(' ');
+  elements.batchDoorInput.setAttribute('aria-invalid', validation.errors.nDoors ? 'true' : 'false');
   elements.trialInput.setAttribute('aria-invalid', validation.errors.trials ? 'true' : 'false');
 }
 
 function setRunning(isRunning) {
   elements.runButton.disabled = isRunning;
   elements.cancelButton.disabled = !isRunning;
-  elements.doorInput.disabled = isRunning;
+  elements.batchDoorInput.disabled = isRunning;
   elements.trialInput.disabled = isRunning;
   elements.modeInputs.forEach((input) => {
     input.disabled = isRunning;
@@ -190,18 +380,92 @@ function setProgress(value) {
   elements.progressBar.value = Math.max(0, Math.min(100, value));
 }
 
-function setStatus(key, values = {}) {
+function setBatchStatus(key, values = {}) {
   elements.statusText.dataset.statusKey = key;
   elements.statusText.dataset.statusValues = JSON.stringify(values);
   elements.statusText.textContent = t(key, values);
 }
 
-function renderEmptyResults() {
-  const empty = document.createElement('p');
-  empty.className = 'empty-state';
-  empty.textContent = t('results.empty');
-  elements.resultsGrid.replaceChildren(empty);
-  elements.comparisonSummary.replaceChildren();
+function handleFilterChange(event) {
+  activeFilter = event.target.value;
+  elements.trialLogScroller.scrollTop = 0;
+  renderSharedData();
+}
+
+function setSelectedFilter(filter) {
+  elements.filterInputs.forEach((input) => {
+    input.checked = input.value === filter;
+  });
+}
+
+function handleClear() {
+  sharedLog.clear();
+  setProgress(0);
+  setBatchStatus('config.ready');
+  elements.playOutcome.textContent = '';
+  renderSharedData();
+}
+
+function handleExport() {
+  if (sharedLog.length === 0) {
+    return;
+  }
+
+  if (!globalThis.XLSX) {
+    elements.batchErrorMessage.textContent = t('export.unavailable');
+    return;
+  }
+
+  const workbookData = createWorkbookData(sharedLog, createExportLabels());
+  const workbook = globalThis.XLSX.utils.book_new();
+  globalThis.XLSX.utils.book_append_sheet(workbook, globalThis.XLSX.utils.aoa_to_sheet(workbookData.summary), 'Summary');
+  globalThis.XLSX.utils.book_append_sheet(workbook, globalThis.XLSX.utils.aoa_to_sheet(workbookData.trials), 'Trials');
+  globalThis.XLSX.writeFile(workbook, `monty-hall-simulator-v0.2.0-${createTimestamp()}.xlsx`);
+}
+
+function createExportLabels() {
+  return {
+    filter: t('results.filter'),
+    mode: t('log.headers.source'),
+    index: t('log.headers.index'),
+    strategy: t('log.headers.strategy'),
+    carDoor: t('log.headers.carDoor'),
+    firstChoice: t('log.headers.firstChoice'),
+    montyChoice: t('log.headers.montyChoice'),
+    openedDoorCount: t('log.headers.openedDoorCount'),
+    finalChoice: t('log.headers.finalChoice'),
+    result: t('log.headers.result'),
+    trials: t('results.trials'),
+    wins: t('results.wins'),
+    losses: t('results.losses'),
+    observedWinRate: t('results.observedWinRate'),
+    theoreticalRate: t('results.theoreticalRate'),
+    expectedWins: t('theory.expectedWinsShort'),
+    win: t('log.win'),
+    loss: t('log.loss'),
+    filters: {
+      [RESULT_FILTERS.all]: t('filter.all'),
+      [RESULT_FILTERS.play]: t('filter.play'),
+      [RESULT_FILTERS.batch]: t('filter.batch')
+    },
+    sources: {
+      [TRIAL_SOURCES.play]: t('source.play'),
+      [TRIAL_SOURCES.batch]: t('source.batch')
+    },
+    strategies: {
+      [STRATEGIES.stay]: t('results.strategyStay'),
+      [STRATEGIES.switch]: t('results.strategySwitch')
+    }
+  };
+}
+
+function renderSharedData() {
+  const summary = summarizeLog(sharedLog, activeFilter);
+  renderResults(summary);
+  renderTrialLog();
+  renderTheory(summary);
+  elements.exportButton.disabled = sharedLog.length === 0;
+  elements.clearButton.disabled = sharedLog.length === 0;
 }
 
 function renderResults(summary) {
@@ -216,7 +480,14 @@ function renderResults(summary) {
     cards.push(renderStrategyCard('results.strategySwitch', 'switch', observed.switch));
   }
 
-  elements.resultsGrid.replaceChildren(...cards);
+  if (cards.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.textContent = sharedLog.length === 0 ? t('results.empty') : t('results.emptyFilter');
+    elements.resultsGrid.replaceChildren(empty);
+  } else {
+    elements.resultsGrid.replaceChildren(...cards);
+  }
 
   if (observed.comparison) {
     const comparison = document.createElement('dl');
@@ -274,21 +545,23 @@ function scheduleTrialLogRender() {
 }
 
 function renderTrialLog() {
-  const log = lastResult?.log;
+  const log = sharedLog.filter(activeFilter);
 
-  if (!log || log.length === 0) {
+  if (log.length === 0) {
     elements.logMeta.textContent = '';
     const row = document.createElement('tr');
     const cell = document.createElement('td');
     cell.className = 'empty-log';
-    cell.colSpan = 8;
-    cell.textContent = t('log.empty');
+    cell.colSpan = 9;
+    cell.textContent = sharedLog.length === 0 ? t('log.empty') : t('log.emptyFilter');
     row.append(cell);
     elements.trialLogBody.replaceChildren(row);
     return;
   }
 
-  elements.logMeta.textContent = t('log.totalRows', { count: formatNumber(log.length) });
+  elements.logMeta.textContent = activeFilter === RESULT_FILTERS.all
+    ? t('log.totalRows', { count: formatNumber(log.length) })
+    : t('log.totalFilteredRows', { count: formatNumber(log.length), total: formatNumber(sharedLog.length) });
 
   const range = calculateVisibleRange({
     totalRows: log.length,
@@ -316,7 +589,7 @@ function appendSpacerRow(fragment, height) {
   const row = document.createElement('tr');
   row.className = 'spacer-row';
   const cell = document.createElement('td');
-  cell.colSpan = 8;
+  cell.colSpan = 9;
   cell.style.height = `${height}px`;
   row.append(cell);
   fragment.append(row);
@@ -325,7 +598,9 @@ function appendSpacerRow(fragment, height) {
 function renderTrialRow(trial) {
   const row = document.createElement('tr');
   row.dataset.rowIndex = String(trial.index);
+  row.dataset.filteredIndex = String(trial.filteredIndex ?? trial.index);
 
+  appendCell(row, t(sourceKey(trial.source)));
   appendCell(row, formatNumber(trial.index + 1), 'numeric');
   appendCell(row, t(strategyKey(trial.strategy)));
   appendCell(row, formatDoor(trial.carDoor));
@@ -348,55 +623,15 @@ function appendCell(row, text, className = '') {
   row.append(cell);
 }
 
-function renderTheoryFromConfig() {
-  const validation = validateConfig({
-    nDoors: elements.doorInput.value,
-    trials: elements.trialInput.value,
-    mode: getSelectedMode()
-  });
-
-  if (!validation.ok) {
-    elements.theoryRates.textContent = '';
-    elements.theoryExpected.textContent = '';
-    elements.theoryStats.replaceChildren();
-    elements.bayesFormula.replaceChildren();
-    return;
-  }
-
-  renderTheory({
-    nDoors: validation.config.nDoors,
-    trials: validation.config.trials,
-    mode: validation.config.mode,
-    theory: {
-      stayRate: 1 / validation.config.nDoors,
-      switchRate: (validation.config.nDoors - 1) / validation.config.nDoors,
-      stayExpectedWins: validation.config.trials / validation.config.nDoors,
-      switchExpectedWins: validation.config.trials * ((validation.config.nDoors - 1) / validation.config.nDoors)
-    }
-  });
-}
-
 function renderTheory(summary) {
-  if (!summary) {
-    renderTheoryFromConfig();
-    return;
-  }
-
   elements.theoryRates.textContent = t('theory.rates');
   elements.theoryExpected.textContent = t('theory.expectedWins', {
-    trials: formatNumber(summary.trials),
+    trials: formatNumber(summary.totalTrials),
     stay: formatNumber(summary.theory.stayExpectedWins, 2),
     switch: formatNumber(summary.theory.switchExpectedWins, 2)
   });
-  renderBayesFormula(summary.nDoors);
+  renderBayesFormula();
 
-  if (!summary.observed) {
-    elements.theoryStats.replaceChildren();
-    return;
-  }
-
-  const table = document.createElement('table');
-  table.className = 'theory-table';
   const strategies = [];
 
   if (summary.observed.stay) {
@@ -412,6 +647,8 @@ function renderTheory(summary) {
     return;
   }
 
+  const table = document.createElement('table');
+  table.className = 'theory-table';
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
   ['', ...strategies.map(([, label]) => label)].forEach((label) => {
@@ -444,7 +681,7 @@ function renderTheory(summary) {
   elements.theoryStats.replaceChildren(table);
 }
 
-function renderBayesFormula(nDoors) {
+function renderBayesFormula() {
   const formulas = [
     ['theory.formulaBayesLabel', 'theory.formulaBayes'],
     ['theory.formulaFirstPrizeLabel', 'theory.formulaFirstPrize'],
@@ -491,8 +728,12 @@ function appendDefinition(list, labelKey, value) {
   list.append(dt, dd);
 }
 
+function sourceKey(source) {
+  return source === TRIAL_SOURCES.play ? 'source.play' : 'source.batch';
+}
+
 function strategyKey(strategy) {
-  return strategy === 'switch' ? 'results.strategySwitch' : 'results.strategyStay';
+  return strategy === STRATEGIES.switch ? 'results.strategySwitch' : 'results.strategyStay';
 }
 
 function formatDoor(index) {
@@ -542,4 +783,8 @@ function createPercentFormatter() {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+}
+
+function createTimestamp() {
+  return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 }
